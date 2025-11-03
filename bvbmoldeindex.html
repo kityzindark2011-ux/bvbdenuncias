@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📌 Denúncia Automática</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Pacifico&display=swap');
+
+body, html { margin:0; padding:0; height:100%; font-family:'Roboto',sans-serif; transition: background-color 0.5s,color 0.5s;}
+body.light {background:#eef2f7;color:#333;}
+body.dark {background:#1e1e2f;color:#eee;}
+
+.container {
+    max-width:700px;margin:30px auto;padding:25px;border-radius:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.15);background-color:rgba(255,255,255,0.95);
+    transition:background-color 0.5s;
+}
+body.dark .container {background-color:rgba(30,30,50,0.95);}
+
+h1{text-align:center;margin-bottom:10px;font-weight:700;}
+.subtitulo{text-align:center;font-family:'Pacifico',cursive;font-size:28px;color:cyan;margin-bottom:20px;}
+.subtitulo .raio{font-size:32px;margin:0 10px;}
+
+label{display:block;margin-top:15px;font-weight:bold;}
+input,textarea{width:100%;padding:12px;margin-top:5px;border-radius:10px;border:1px solid #ccc;font-size:14px;box-sizing:border-box;transition:border-color 0.3s;}
+input:focus,textarea:focus{border-color:#4CAF50;outline:none;}
+
+.botoes{text-align:center;margin-top:15px;}
+button{padding:12px 25px;font-size:16px;border:none;border-radius:10px;margin:5px;cursor:pointer;color:white;transition: background-color 0.3s;}
+#enviarBtn{background-color:#4CAF50;}#enviarBtn:hover{background-color:#45a049;}
+#historicoBtn{background-color:#ff9800;}#historicoBtn:hover{background-color:#fb8c00;}
+#deletarBtn{background-color:#f44336;}#deletarBtn:hover{background-color:#e53935;}
+#temaBtn{background-color:#00bcd4;}#temaBtn:hover{background-color:#00acc1;}
+
+.mensagem-box{background-color:#f9f9f9;border-radius:12px;padding:15px;margin-top:20px;white-space:pre-wrap;font-family:Consolas,monospace;font-size:14px;color:#333;min-height:120px;transition:background-color 0.3s,color 0.3s;}
+body.dark .mensagem-box{background-color:#2b2b3c;color:#eee;}
+
+.historico-container{margin-top:20px;display:none;flex-direction:column;gap:10px;}
+.card{background:#f1f1f1;padding:12px 15px;border-radius:12px;box-shadow:0 3px 8px rgba(0,0,0,0.1);font-size:14px;word-break:break-word;transition:background 0.3s,color 0.3s;}
+body.dark .card{background:#2b2b3c;color:#eee;}
+
+#searchInput{padding:10px;width:100%;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;box-sizing:border-box;}
+</style>
+</head>
+<body class="light">
+<div class="container">
+<h1>📌 Denúncias Automáticas</h1>
+<div class="subtitulo"><span class="raio">⚡</span> BVB|MD (509) <span class="raio">⚡</span></div>
+
+<label for="denunciante">👤 Denunciante:</label>
+<input type="text" id="denunciante" placeholder="Ex: 999">
+
+<label for="acusado">🧑 Acusado:</label>
+<input type="text" id="acusado" placeholder="Ex: 777">
+
+<label for="motivo">⚠️ Motivo:</label>
+<input type="text" id="motivo" placeholder="Ex: rdm">
+
+<label for="pena">⏱️ Pena:</label>
+<input type="text" id="pena" placeholder="Ex: 6 horas">
+
+<label for="provas">📎 Provas (link):</label>
+<textarea id="provas" rows="3" placeholder="Ex: https://youtube.com/..."></textarea>
+
+<div class="botoes">
+<button id="enviarBtn">📤 Enviar Denúncia</button>
+<button id="historicoBtn">📜 Histórico de Denúncias</button>
+<button id="deletarBtn">🗑️ Deletar Denúncias</button>
+<button id="temaBtn">🌓 Mudar Tema</button>
+</div>
+
+<div class="mensagem-box" id="mensagem">A mensagem gerada aparecerá aqui...</div>
+
+<div class="historico-container" id="historicoContainer">
+<input type="text" id="searchInput" placeholder="🔍 Pesquise pelo ID do denunciante">
+<div class="historico" id="historico"></div>
+</div>
+</div>
+
+<script>
+function gerarMensagem(){
+    const hoje = new Date();
+    const data = hoje.toLocaleDateString('pt-BR');
+    const denunciante = document.getElementById('denunciante').value || "[Não informado]";
+    const acusado = document.getElementById('acusado').value || "[Não informado]";
+    const motivo = document.getElementById('motivo').value || "[Não informado]";
+    const pena = document.getElementById('pena').value || "[Não informado]";
+    const provas = document.getElementById('provas').value || "[Não informado]";
+
+    const mensagem = `- Data da Denúncia: ${data}
+- Denunciante: ${denunciante}
+- Acusado: ${acusado}
+- Motivo: ${motivo}
+- Pena: ${pena}
+- Atendimento: 𝓑𝓥𝓑 » Md (509)
+- Provas: ${provas}`;
+
+    document.getElementById('mensagem').textContent = mensagem;
+    return {mensagem,id:denunciante,data};
+}
+
+// Salvar histórico em arquivo automático
+function salvarHistoricoArquivo(){
+    const historico = JSON.parse(localStorage.getItem('denuncias') || "[]");
+    if(historico.length===0) return;
+    let conteudo="";
+    historico.forEach(item=>{
+        conteudo+=`[${item.data}] ${item.mensagem}\n\n`;
+    });
+    const blob=new Blob([conteudo],{type:"text/plain;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download="Moldes salvo sitebvb.txt";
+    a.style.display="none";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// Enviar denúncia automaticamente salva no arquivo e no site
+document.getElementById('enviarBtn').addEventListener('click',function(){
+    const {mensagem,id,data}=gerarMensagem();
+    let historico=JSON.parse(localStorage.getItem('denuncias')||"[]");
+    historico.push({id,mensagem,data});
+    localStorage.setItem('denuncias',JSON.stringify(historico));
+    salvarHistoricoArquivo();
+    alert("✅ Denúncia enviada e salva automaticamente!");
+});
+
+// Mostrar histórico
+document.getElementById('historicoBtn').addEventListener('click',function(){
+    const historicoContainer=document.getElementById('historicoContainer');
+    historicoContainer.style.display="flex";
+    atualizarHistorico();
+});
+
+// Atualizar histórico
+function atualizarHistorico(filtro=""){
+    const historicoEl=document.getElementById('historico');
+    historicoEl.innerHTML="";
+    const historico=JSON.parse(localStorage.getItem('denuncias')||"[]");
+    const filtrado=historico.filter(item=>item.id.includes(filtro));
+    if(filtrado.length===0){
+        historicoEl.innerHTML="<div class='card'>Nenhuma denúncia encontrada</div>";
+    }else{
+        filtrado.forEach((item,index)=>{
+            const card=document.createElement('div');
+            card.className='card';
+            card.textContent=`${index+1}. [${item.data}] ${item.mensagem}`;
+            historicoEl.appendChild(card);
+        });
+    }
+}
+
+// Pesquisa por ID
+document.getElementById('searchInput').addEventListener('input',function(){
+    const filtro=this.value.trim();
+    atualizarHistorico(filtro);
+});
+
+// Deletar histórico
+document.getElementById('deletarBtn').addEventListener('click',function(){
+    if(confirm("🗑️ Tem certeza que deseja deletar todas as denúncias?")){
+        localStorage.removeItem('denuncias');
+        atualizarHistorico();
+    }
+});
+
+// Alternar tema
+document.getElementById('temaBtn').addEventListener('click',function(){
+    document.body.classList.toggle('dark');
+    document.body.classList.toggle('light');
+});
+
+// Atalho K
+document.addEventListener('keydown',function(event){
+    if(event.key.toLowerCase()==='k'){ gerarMensagem(); }
+});
+
+// Carregar histórico ao abrir página
+window.addEventListener('load',()=>{
+    if(localStorage.getItem('denuncias')){
+        atualizarHistorico();
+    }
+});
+</script>
+</body>
+</html>
